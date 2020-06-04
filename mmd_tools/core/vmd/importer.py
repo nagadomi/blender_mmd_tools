@@ -2,6 +2,7 @@
 
 import logging
 import os
+from collections import defaultdict
 
 import bpy
 import math
@@ -291,6 +292,57 @@ class VMDImporter:
         kp.handle_right_type = 'FREE'
         kp.handle_right = kp.co + Vector((1, 0))
 
+    @staticmethod
+    def __convertQuaternionFCurveToEulerFCurve(action, euler_bones):
+        remove_fcurves = []
+        for bone in euler_bones:
+            axis_order = bone.rotation_mode
+            quaternion_data_path = 'pose.bones["%s"].rotation_quaternion' % bone.name
+            euler_data_path = 'pose.bones["%s"].rotation_euler' % bone.name
+
+            quaternion_fcurves = []
+            euler_fcurves = []
+            for axis_i in range(4):
+                c = action.fcurves.find(data_path=quaternion_data_path, index=axis_i)
+                if c is not None:
+                    quaternion_fcurves.append(c)
+            if len(quaternion_fcurves) != 4:
+                continue # no keyframes
+            for axis_i in range(3):
+                euler_fcurves.append(action.fcurves.new(data_path=euler_data_path, index=axis_i, action_group=bone.name))
+
+            keyframe_points = defaultdict(lambda: [None, None, None, None])
+            for c in quaternion_fcurves:
+                for p in c.keyframe_points:
+                    keyframe_points[int(p.co[0])][c.array_index] = p
+            for frame, p in keyframe_points.items():
+                rot = Quaternion((p[0].co[1], p[1].co[1], p[2].co[1], p[3].co[1])).to_euler(axis_order)
+                for c, value in zip(euler_fcurves, rot):
+                    c.keyframe_points.insert(frame, value)
+
+            # FIXME: interpolation
+            for qc, ec in zip(quaternion_fcurves[1:], euler_fcurves):
+                qv = [p.co[1] for p in qc.keyframe_points]
+                ev = [p.co[1] for p in ec.keyframe_points]
+                q_range = max(qv) - min(qv)
+                e_range = max(ev) - min(ev)
+                if q_range != 0:
+                    scale = e_range / q_range
+                else:
+                    scale = 1
+                for qp, ep in zip(qc.keyframe_points, ec.keyframe_points):
+                    ep.interpolation = qp.interpolation
+                    ep.handle_right_type = qp.handle_right_type
+                    ep.handle_left_type = qp.handle_left_type
+                    ep.handle_right = Vector((qp.handle_right[0], (qp.handle_right[1] - qp.co[1]) * scale + ep.co[1]))
+                    ep.handle_left = Vector((qp.handle_left[0], (qp.handle_left[1] - qp.co[1]) * scale + ep.co[1]))
+            remove_fcurves.extend(quaternion_fcurves)
+
+        # remove quaternion fcurves
+        for c in remove_fcurves:
+            action.fcurves.remove(c)
+
+
 
     def __assignToArmature(self, armObj, action_name=None):
         boneAnim = self.__vmdFile.boneAnimation
@@ -373,6 +425,11 @@ class VMDImporter:
                     for idx, prev_kp, kp in zip(indices, prev_kps, curr_kps):
                         self.__setInterpolation(interp[idx:idx+16:4], prev_kp, kp)
                 prev_kps = curr_kps
+
+        euler_bones = [bone for bone in armObj.pose.bones if bone.rotation_mode not in ('QUATERNION', 'AXIS_ANGLE')]
+        logging.info('---- euler mode bones %d', len(euler_bones))
+        if euler_bones:
+            self.__convertQuaternionFCurveToEulerFCurve(action, euler_bones)
 
         for c in action.fcurves:
             self.__fixFcurveHandles(c)
