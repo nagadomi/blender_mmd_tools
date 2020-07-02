@@ -85,10 +85,10 @@ class PMXImporter:
 
         txt = bpy.data.texts.new(obj_name)
         txt.from_string(pmxModel.comment.replace('\r', ''))
-        mmd_root.comment_text = txt.name
+        mmd_root.comment_text = txt
         txt = bpy.data.texts.new(obj_name+'_e')
         txt.from_string(pmxModel.comment_e.replace('\r', ''))
-        mmd_root.comment_e_text = txt.name
+        mmd_root.comment_e_text = txt
 
         self.__armObj = self.__rig.armature()
         self.__armObj.hide = True

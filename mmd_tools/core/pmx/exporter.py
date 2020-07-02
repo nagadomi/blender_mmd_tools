@@ -1205,12 +1205,10 @@ class __PmxExporter:
         if root is not None:
             self.__model.name = root.mmd_root.name or root.name
             self.__model.name_e = root.mmd_root.name_e
-            txt = bpy.data.texts.get(root.mmd_root.comment_text, None)
-            if txt:
-                self.__model.comment = txt.as_string().replace('\n', '\r\n')
-            txt = bpy.data.texts.get(root.mmd_root.comment_e_text, None)
-            if txt:
-                self.__model.comment_e = txt.as_string().replace('\n', '\r\n')
+            if root.mmd_root.comment_text:
+                self.__model.comment = root.mmd_root.comment_text.as_string().replace('\n', '\r\n')
+            if root.mmd_root.comment_e_text:
+                self.__model.comment_e = root.mmd_root.comment_e_text.as_string().replace('\n', '\r\n')
 
         self.__armature = args.get('armature', None)
         meshes = sorted(args.get('meshes', []), key=lambda x: x.name)

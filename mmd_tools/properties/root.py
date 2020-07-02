@@ -3,7 +3,7 @@
 """
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty, EnumProperty
+from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty, EnumProperty, PointerProperty
 
 from mmd_tools import register_wrap
 from mmd_tools import utils
@@ -301,16 +301,16 @@ class MMDRoot(PropertyGroup):
         default='',
         )
 
-    comment_text = StringProperty(
+    comment_text = PointerProperty(
         name='Comment',
+        type=bpy.types.Text,
         description='The text datablock of the comment',
-        default='',
         )
 
-    comment_e_text = StringProperty(
+    comment_e_text = PointerProperty(
         name='Comment (English)',
+        type=bpy.types.Text,
         description='The text datablock of the english comment',
-        default='',
         )
 
     show_meshes = BoolProperty(

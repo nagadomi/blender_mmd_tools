@@ -433,11 +433,8 @@ class TranslateMMDModel(Operator):
         mmd_root = rig.rootObject().mmd_root
         mmd_root.name_e = self.translate(mmd_root.name, mmd_root.name_e)
 
-        comment_text = bpy.data.texts.get(mmd_root.comment_text, None)
-        comment_e_text = bpy.data.texts.get(mmd_root.comment_e_text, None)
-        if comment_text and comment_e_text:
-            comment_e = self.translate(comment_text.as_string(), comment_e_text.as_string())
-            comment_e_text.from_string(comment_e)
+        if mmd_root.comment_text and mmd_root.comment_e_text:
+            mmd_root.comment_e_text.from_string(self.translate(mmd_root.comment_text.as_string(), mmd_root.comment_e_text.as_string()))
 
     def translate_bone(self, rig):
         bones = rig.armature().pose.bones
