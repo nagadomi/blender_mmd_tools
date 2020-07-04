@@ -301,17 +301,19 @@ class MMDRoot(PropertyGroup):
         default='',
         )
 
-    comment_text = PointerProperty(
+    comment_text_ref = PointerProperty(
         name='Comment',
         type=bpy.types.Text,
         description='The text datablock of the comment',
         )
-
-    comment_e_text = PointerProperty(
+    comment_e_text_ref = PointerProperty(
         name='Comment (English)',
         type=bpy.types.Text,
         description='The text datablock of the english comment',
         )
+
+    comment_text = StringProperty()   # reserved for backward compatibility
+    comment_e_text = StringProperty() #
 
     show_meshes = BoolProperty(
         name='Show Meshes',

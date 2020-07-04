@@ -113,11 +113,36 @@ def header_view3d_pose_draw(self, context):
     if obj and obj.type == 'ARMATURE' and obj.mode == 'POSE':
         self.layout.operator('mmd_tools.flip_pose', text='', icon='ARROW_LEFTRIGHT')
 
+def patch_comment_datablock():
+    import mmd_tools.core.model as mmd_model
+    for obj in bpy.data.objects:
+        if obj.type != 'ARMATURE':
+            continue
+        root = mmd_model.Model.findRoot(obj)
+        if root:
+            mmd_root = root.mmd_root
+            if mmd_root.comment_text:
+                logging.debug('Patch comment_text: `%s`', mmd_root.comment_text)
+                txt = bpy.data.texts.get(mmd_root.comment_text, None)
+                if txt is None:
+                    txt = bpy.data.texts.get(mmd_root.comment_text.strip(), None)
+                mmd_root.comment_text_ref = txt
+                mmd_root.comment_text = ''
+            if mmd_root.comment_e_text:
+                logging.debug('Patch comment_e_text: `%s`', mmd_root.comment_e_text)
+                txt = bpy.data.texts.get(mmd_root.comment_e_text, None)
+                if txt is None:
+                    txt = bpy.data.texts.get(mmd_root.comment_e_text.strip(), None)
+                mmd_root.comment_e_text_ref = txt
+                mmd_root.comment_e_text = ''
+
+
 @persistent
 def load_handler(dummy):
     from mmd_tools.core.sdef import FnSDEF
     FnSDEF.clear_cache()
     FnSDEF.register_driver_function()
+    patch_comment_datablock()
 
 def register():
     for cls in __bl_classes:
